@@ -1,0 +1,9 @@
+{
+  "tabWidth": 4,
+  "useTabs": true,
+  "bracketSameLine": true,
+  "printWidth": 120,
+  "jsxSingleQuote": true,
+  "singleQuote": true,
+  "vueIndentScriptAndStyle": true
+}
