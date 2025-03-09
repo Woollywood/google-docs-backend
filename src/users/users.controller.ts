@@ -2,9 +2,9 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AccessTokenGuard } from 'src/auth/accessToken.guard';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-import { User } from './users.entity';
-import { JwtAccessTokenUser } from 'src/auth/decorators/auth.decorator';
-import { JwtAccessTokenPayload } from 'src/auth/auth.interfaces';
+import { User as UserEntity } from './users.entity';
+import { User } from 'src/auth/auth.decorator';
+import { JwtDto } from 'src/auth/dto/tokens.dto';
 
 @ApiBearerAuth()
 @UseGuards(AccessTokenGuard)
@@ -12,9 +12,11 @@ import { JwtAccessTokenPayload } from 'src/auth/auth.interfaces';
 export class UsersController {
 	constructor(private readonly usersService: UsersService) {}
 
-	@ApiResponse({ status: 200, type: User })
+	@ApiResponse({ status: 200, type: UserEntity })
 	@Get('/me')
-	getMe(@JwtAccessTokenUser() { sub }: JwtAccessTokenPayload) {
+	getMe(@User() { sub }: JwtDto) {
+		console.log(sub);
+
 		return this.usersService.findById(+sub);
 	}
 }

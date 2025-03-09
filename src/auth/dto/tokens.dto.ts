@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class TokensDto {
 	@ApiProperty()
@@ -9,6 +9,18 @@ export class TokensDto {
 	@ApiProperty()
 	@IsString()
 	refreshToken: string;
+}
+
+export class JwtDto {
+	@IsString()
+	sub: string;
+
+	@IsString()
+	@MinLength(3)
+	username: string;
+
+	@IsEmail()
+	email: string;
 }
 
 export class RefreshTokenDto {

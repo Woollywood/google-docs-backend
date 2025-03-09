@@ -7,15 +7,19 @@ export class User {
 	@PrimaryGeneratedColumn({ type: 'bigint' })
 	id: number;
 
-	@ApiProperty({ example: 'John' })
-	@Column()
-	name: string;
-
-	@ApiProperty({ example: 'john' })
+	@ApiProperty({ example: 'john', minLength: 3 })
 	@Column({ unique: true })
 	username: string;
 
-	@ApiProperty({ example: 'changeme' })
+	@ApiProperty({ example: 'example@example.com' })
+	@Column({ unique: true })
+	email: string;
+
+	@ApiProperty({ example: false })
+	@Column({ default: false })
+	emailVerified: boolean;
+
+	@ApiProperty({ example: 'changeme', minLength: 6 })
 	@Column()
 	password: string;
 

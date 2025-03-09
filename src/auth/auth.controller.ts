@@ -1,12 +1,10 @@
 import { Controller, Post, Body, UseGuards, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { AuthDto } from './dto/auth.dto';
 import { AccessTokenGuard } from './accessToken.guard';
-import { JwtAccessTokenUser } from './decorators/auth.decorator';
-import { JwtAccessTokenPayload } from './auth.interfaces';
-import { RefreshTokenDto, TokensDto } from './dto/tokens.dto';
+import { JwtDto, RefreshTokenDto, TokensDto } from './dto/tokens.dto';
 import { ApiResponse } from '@nestjs/swagger';
+import { AccessToken, User } from './auth.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -20,7 +18,7 @@ export class AuthController {
 
 	@ApiResponse({ status: 201, type: TokensDto })
 	@Post('sign-in')
-	signIn(@Body() dto: AuthDto) {
+	signIn(@Body() dto: CreateUserDto) {
 		return this.authService.signIn(dto);
 	}
 
@@ -28,8 +26,8 @@ export class AuthController {
 	@UseGuards(AccessTokenGuard)
 	@HttpCode(204)
 	@Post('sign-out')
-	signOut(@JwtAccessTokenUser() payload: JwtAccessTokenPayload) {
-		return this.authService.signOut(payload);
+	signOut(@User() { sub }: JwtDto, @AccessToken() accessToken: string) {
+		return this.authService.signOut(+sub, accessToken);
 	}
 
 	@ApiResponse({ status: 201, type: TokensDto })

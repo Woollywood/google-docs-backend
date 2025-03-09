@@ -3,11 +3,10 @@ import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { AuthDto } from './dto/auth.dto';
 import { SessionsService } from 'src/sessions/sessions.service';
-import { RefreshTokenDto, TokensDto } from './dto/tokens.dto';
-import { JwtAccessTokenPayload, JwtPayload } from './auth.interfaces';
+import { JwtDto, RefreshTokenDto, TokensDto } from './dto/tokens.dto';
 import * as argon2 from 'argon2';
+import { User } from 'src/users/users.entity';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +25,7 @@ export class AuthService {
 
 		const hashedPassword = await this.hashData(dto.password);
 		const newUser = await this.usersService.create({ ...dto, password: hashedPassword });
-		const tokens = await this.getTokens(newUser.id, newUser.username);
+		const tokens = await this.getTokens(this.dbUserToJwtPayload(newUser));
 		const { accessToken, refreshToken } = tokens;
 		const { hashedAccessToken, hashedRefreshToken } = await this.getHashedTokens({ accessToken, refreshToken });
 		await this.sessionsService.create({
@@ -37,7 +36,7 @@ export class AuthService {
 		return tokens;
 	}
 
-	async signIn(dto: AuthDto) {
+	async signIn(dto: CreateUserDto) {
 		const user = await this.usersService.findByUsername(dto.username);
 		if (!user) {
 			throw new BadRequestException('User does not exist');
@@ -48,7 +47,7 @@ export class AuthService {
 			throw new BadRequestException('Password is incorrect');
 		}
 
-		const tokens = await this.getTokens(user.id, user.username);
+		const tokens = await this.getTokens(this.dbUserToJwtPayload(user));
 		const { accessToken, refreshToken } = tokens;
 		const { hashedAccessToken, hashedRefreshToken } = await this.getHashedTokens({ accessToken, refreshToken });
 		await this.sessionsService.create({
@@ -59,8 +58,8 @@ export class AuthService {
 		return tokens;
 	}
 
-	async signOut({ sub, accessToken }: JwtAccessTokenPayload) {
-		const session = await this.sessionsService.findByIdAndAccessToken(+sub, accessToken);
+	async signOut(userId: number, accessToken: string) {
+		const session = await this.sessionsService.findByIdAndAccessToken(userId, accessToken);
 		if (!session) {
 			throw new BadRequestException('Session not found');
 		}
@@ -68,33 +67,37 @@ export class AuthService {
 	}
 
 	async refreshTokens({ refreshToken }: RefreshTokenDto) {
-		let user: JwtPayload = {} as JwtPayload;
 		try {
-			user = this.jwtService.verify<JwtPayload>(refreshToken, {
+			const user = this.jwtService.verify<JwtDto>(refreshToken, {
 				secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
 			});
+
+			const session = await this.sessionsService.findByIdAndRefreshToken(+user.sub, refreshToken);
+
+			if (!session) {
+				throw new UnauthorizedException();
+			}
+
+			const tokens = await this.getTokens({ email: user.email, sub: user.sub, username: user.username });
+			const { hashedAccessToken, hashedRefreshToken } = await this.getHashedTokens(tokens);
+			await this.sessionsService.update(session?.id, {
+				accessToken: hashedAccessToken,
+				refreshToken: hashedRefreshToken,
+			});
+			return tokens;
 		} catch (error) {
 			if (error instanceof Error) {
 				throw new UnauthorizedException();
 			}
 		}
-
-		const session = await this.sessionsService.findByIdAndRefreshToken(+user.sub, refreshToken);
-		if (!session) {
-			throw new UnauthorizedException();
-		}
-
-		const tokens = await this.getTokens(+user.sub, user.username);
-		const { hashedAccessToken, hashedRefreshToken } = await this.getHashedTokens(tokens);
-		await this.sessionsService.update(session?.id, {
-			accessToken: hashedAccessToken,
-			refreshToken: hashedRefreshToken,
-		});
-		return tokens;
 	}
 
 	private hashData(data: string) {
 		return argon2.hash(data);
+	}
+
+	private dbUserToJwtPayload(user: User): JwtDto {
+		return { sub: String(user.id), email: user.email, username: user.username };
 	}
 
 	private async getHashedTokens(dto: TokensDto) {
@@ -106,8 +109,7 @@ export class AuthService {
 		return { hashedAccessToken, hashedRefreshToken };
 	}
 
-	private async getTokens(userId: number, username: string) {
-		const payload: JwtPayload = { sub: String(userId), username };
+	private async getTokens(payload: JwtDto) {
 		const [accessToken, refreshToken] = await Promise.all([
 			this.jwtService.signAsync(payload, {
 				secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
