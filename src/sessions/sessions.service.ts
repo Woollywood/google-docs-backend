@@ -5,8 +5,8 @@ import { Repository } from 'typeorm';
 import { CreateSessionDto } from './dto/createSession.dto';
 import { UpdateSessionDto } from './dto/updateSession.dto';
 import { UsersService } from 'src/users/users.service';
-import * as argon2 from 'argon2';
 import { RefreshTokenDto } from 'src/auth/dto/tokens.dto';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class SessionsService {
@@ -31,8 +31,8 @@ export class SessionsService {
 
 		for (const session of user.sessions) {
 			const isVerified = await Promise.all([
-				argon2.verify(session.accessToken!, accessToken),
-				argon2.verify(session.refreshToken!, refreshToken),
+				argon2.verify(session.accessToken, accessToken),
+				argon2.verify(session.refreshToken, refreshToken),
 			]);
 			if (isVerified.every(Boolean)) {
 				return this.sessionRepository.findOneBy({
@@ -57,7 +57,7 @@ export class SessionsService {
 		}
 
 		for (const session of user.sessions) {
-			const isVerified = await argon2.verify(session.refreshToken!, refreshToken);
+			const isVerified = await argon2.verify(session.refreshToken, refreshToken);
 			if (isVerified) {
 				return this.sessionRepository.findOneBy({ id: session.id, refreshToken: session.refreshToken });
 			}
@@ -77,7 +77,7 @@ export class SessionsService {
 		}
 
 		for (const session of user.sessions) {
-			const isVerified = await argon2.verify(session.accessToken!, accessToken);
+			const isVerified = await argon2.verify(session.accessToken, accessToken);
 			if (isVerified) {
 				return this.sessionRepository.findOneBy({ id: session.id, accessToken: session.accessToken });
 			}
