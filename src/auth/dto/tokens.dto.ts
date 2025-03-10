@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUUID } from 'class-validator';
+import { IsEmail, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class RefreshDto {
 	@ApiProperty()
@@ -7,10 +7,21 @@ export class RefreshDto {
 	refreshToken: string;
 }
 
-export class EmailVerificationDto {
+export class TokenDto {
 	@ApiProperty()
 	@IsUUID()
 	token: string;
+}
+
+export class ResetPasswordLinkDto {
+	@ApiProperty()
+	@IsEmail()
+	email: string;
+
+	@ApiProperty()
+	@IsString()
+	@MinLength(6)
+	newPassword: string;
 }
 
 export class AuthTokensDto {

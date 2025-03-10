@@ -5,14 +5,16 @@ import { AccessTokenGuard } from './accessToken.guard';
 import { ApiResponse } from '@nestjs/swagger';
 import { AccessToken, User } from './auth.decorator';
 import { EmailVerificationService } from 'src/email-verification/email-verification.service';
-import { AuthTokensDto, EmailVerificationDto, RefreshDto } from './dto/tokes.dto';
+import { AuthTokensDto, TokenDto, RefreshDto, ResetPasswordLinkDto } from './dto/tokens.dto';
 import { JwtDto } from './dto/auth.dto';
+import { ResetPasswordService } from 'src/reset-password/reset-password.service';
 
 @Controller('auth')
 export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly emailVerificationService: EmailVerificationService,
+		private readonly resetPasswordService: ResetPasswordService,
 	) {}
 
 	@ApiResponse({ status: 201, type: AuthTokensDto })
@@ -42,7 +44,17 @@ export class AuthController {
 	}
 
 	@Post('verify-email')
-	verifyEmail(@Body() { token }: EmailVerificationDto) {
+	verifyEmail(@Body() { token }: TokenDto) {
 		return this.emailVerificationService.verify(token);
+	}
+
+	@Post('reset-password-link')
+	resetPasswordLink(@Body() { email, newPassword }: ResetPasswordLinkDto) {
+		return this.resetPasswordService.sendResetLink(email, newPassword);
+	}
+
+	@Post('reset-password')
+	resetPassword(@Body() { token }: TokenDto) {
+		return this.resetPasswordService.reset(token);
 	}
 }

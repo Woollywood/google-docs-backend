@@ -6,7 +6,7 @@ import { EmailVerification } from './email-verification.entity';
 import { UsersModule } from 'src/users/users.module';
 
 @Module({
-	imports: [EmailModule, TypeOrmModule.forFeature([EmailVerification]), UsersModule],
+	imports: [TypeOrmModule.forFeature([EmailVerification]), EmailModule, UsersModule],
 	providers: [EmailVerificationService],
 	exports: [EmailVerificationService],
 })

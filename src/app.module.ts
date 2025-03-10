@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { EmailModule } from './email/email.module';
 import { EmailVerificationModule } from './email-verification/email-verification.module';
+import { ResetPasswordModule } from './reset-password/reset-password.module';
 
 @Module({
 	imports: [
@@ -28,6 +29,7 @@ import { EmailVerificationModule } from './email-verification/email-verification
 		SessionsModule,
 		EmailModule,
 		EmailVerificationModule,
+		ResetPasswordModule,
 	],
 })
 export class AppModule {}

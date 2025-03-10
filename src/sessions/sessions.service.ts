@@ -6,7 +6,7 @@ import { CreateSessionDto } from './dto/createSession.dto';
 import { UpdateSessionDto } from './dto/updateSession.dto';
 import { UsersService } from 'src/users/users.service';
 import * as argon2 from 'argon2';
-import { RefreshDto } from 'src/auth/dto/tokes.dto';
+import { RefreshDto } from 'src/auth/dto/tokens.dto';
 
 @Injectable()
 export class SessionsService {

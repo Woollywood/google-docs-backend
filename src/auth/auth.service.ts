@@ -6,9 +6,9 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { SessionsService } from 'src/sessions/sessions.service';
 import { User } from 'src/users/users.entity';
 import { EmailVerificationService } from 'src/email-verification/email-verification.service';
-import * as argon2 from 'argon2';
-import { AuthTokensDto, RefreshDto } from './dto/tokes.dto';
+import { AuthTokensDto, RefreshDto } from './dto/tokens.dto';
 import { JwtDto } from './dto/auth.dto';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class AuthService {
