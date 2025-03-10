@@ -4,9 +4,11 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { SessionsService } from 'src/sessions/sessions.service';
-import { JwtDto, RefreshTokenDto, TokensDto } from './dto/tokens.dto';
-import * as argon2 from 'argon2';
 import { User } from 'src/users/users.entity';
+import { EmailVerificationService } from 'src/email-verification/email-verification.service';
+import * as argon2 from 'argon2';
+import { AuthTokensDto, RefreshDto } from './dto/tokes.dto';
+import { JwtDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +17,7 @@ export class AuthService {
 		private readonly sessionsService: SessionsService,
 		private readonly jwtService: JwtService,
 		private readonly configService: ConfigService,
+		private readonly emailVerificationService: EmailVerificationService,
 	) {}
 
 	async signUp(dto: CreateUserDto) {
@@ -33,6 +36,7 @@ export class AuthService {
 			accessToken: hashedAccessToken,
 			refreshToken: hashedRefreshToken,
 		});
+		await this.emailVerificationService.sendVerificationLink(newUser);
 		return tokens;
 	}
 
@@ -45,6 +49,10 @@ export class AuthService {
 		const passwordMatches = await argon2.verify(user.password, dto.password);
 		if (!passwordMatches) {
 			throw new BadRequestException('Password is incorrect');
+		}
+
+		if (!user.emailVerified) {
+			throw new BadRequestException('Email not confirmed');
 		}
 
 		const tokens = await this.getTokens(this.dbUserToJwtPayload(user));
@@ -66,7 +74,7 @@ export class AuthService {
 		return this.sessionsService.remove(session.id);
 	}
 
-	async refreshTokens({ refreshToken }: RefreshTokenDto) {
+	async refreshTokens({ refreshToken }: RefreshDto) {
 		try {
 			const user = this.jwtService.verify<JwtDto>(refreshToken, {
 				secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
@@ -100,7 +108,7 @@ export class AuthService {
 		return { sub: String(user.id), email: user.email, username: user.username };
 	}
 
-	private async getHashedTokens(dto: TokensDto) {
+	private async getHashedTokens(dto: AuthTokensDto) {
 		const { accessToken, refreshToken } = dto;
 		const [hashedAccessToken, hashedRefreshToken] = await Promise.all([
 			this.hashData(accessToken),

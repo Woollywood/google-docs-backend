@@ -30,7 +30,7 @@ export class UsersService {
 		return this.usersRepository.update(id, dto);
 	}
 
-	remove(id: number) {
+	delete(id: number) {
 		return this.usersRepository.delete(id);
 	}
 }

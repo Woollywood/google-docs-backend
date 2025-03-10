@@ -4,7 +4,7 @@ import { AccessTokenGuard } from 'src/auth/accessToken.guard';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { User as UserEntity } from './users.entity';
 import { User } from 'src/auth/auth.decorator';
-import { JwtDto } from 'src/auth/dto/tokens.dto';
+import { JwtDto } from 'src/auth/dto/auth.dto';
 
 @ApiBearerAuth()
 @UseGuards(AccessTokenGuard)

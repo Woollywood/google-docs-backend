@@ -5,8 +5,8 @@ import { Repository } from 'typeorm';
 import { CreateSessionDto } from './dto/createSession.dto';
 import { UpdateSessionDto } from './dto/updateSession.dto';
 import { UsersService } from 'src/users/users.service';
-import { RefreshTokenDto } from 'src/auth/dto/tokens.dto';
 import * as argon2 from 'argon2';
+import { RefreshDto } from 'src/auth/dto/tokes.dto';
 
 @Injectable()
 export class SessionsService {
@@ -86,7 +86,7 @@ export class SessionsService {
 		return null;
 	}
 
-	async findByRefreshToken({ refreshToken }: RefreshTokenDto) {
+	async findByRefreshToken({ refreshToken }: RefreshDto) {
 		return this.sessionRepository.findOneBy({ refreshToken });
 	}
 
