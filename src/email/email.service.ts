@@ -22,7 +22,7 @@ export class EmailService {
 	}
 
 	sendResetPassword(email: string, token: string) {
-		const callbackURL = new URL(this.configService.get<string>('EMAIL_VERIFICATION_CALLBACK_URL') || '');
+		const callbackURL = new URL(this.configService.get<string>('RESET_PASSWORD_CALLBACK_URL') || '');
 		callbackURL.searchParams.set('token', token);
 		return this.send(email, 'Reset your password', `<p>Click the link to reset your password: ${callbackURL}</p>`);
 	}

@@ -52,7 +52,12 @@ export class AuthService {
 		}
 
 		if (!user.emailVerified) {
-			throw new BadRequestException('Email not confirmed');
+			const emailVerificationLink = await this.emailVerificationService.findByUser(user);
+			if (emailVerificationLink) {
+				await this.emailVerificationService.deleteById(emailVerificationLink.id);
+			}
+			await this.emailVerificationService.sendVerificationLink(user);
+			throw new BadRequestException('Email not confirmed. Check your email for a verification link');
 		}
 
 		const tokens = await this.getTokens(this.dbUserToJwtPayload(user));
@@ -79,6 +84,11 @@ export class AuthService {
 			const user = this.jwtService.verify<JwtDto>(refreshToken, {
 				secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
 			});
+
+			const dbUser = await this.usersService.findById(+user.sub);
+			if (!dbUser?.emailVerified) {
+				throw new UnauthorizedException();
+			}
 
 			const session = await this.sessionsService.findByIdAndRefreshToken(+user.sub, refreshToken);
 
@@ -121,7 +131,7 @@ export class AuthService {
 		const [accessToken, refreshToken] = await Promise.all([
 			this.jwtService.signAsync(payload, {
 				secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-				expiresIn: '15m',
+				expiresIn: '30m',
 			}),
 			this.jwtService.signAsync(payload, {
 				secret: this.configService.get<string>('JWT_REFRESH_SECRET'),

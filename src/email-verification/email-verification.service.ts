@@ -16,6 +16,14 @@ export class EmailVerificationService {
 		private readonly usersService: UsersService,
 	) {}
 
+	findByUser(user: User) {
+		return this.emailVerificationRepository.findOneBy({ user });
+	}
+
+	deleteById(id: number) {
+		return this.emailVerificationRepository.delete(id);
+	}
+
 	async sendVerificationLink(user: User) {
 		const rawEntity = this.emailVerificationRepository.create({ expiresAt: moment().add(1, 'day'), user });
 		const createdEntity = await this.emailVerificationRepository.save(rawEntity);
@@ -27,6 +35,7 @@ export class EmailVerificationService {
 			where: { token },
 			relations: { user: true },
 		});
+
 		if (!verificationLink) {
 			throw new BadRequestException('Invalid token');
 		}
