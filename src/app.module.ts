@@ -7,6 +7,7 @@ import { SessionsModule } from './sessions/sessions.module';
 import { EmailModule } from './email/email.module';
 import { EmailVerificationModule } from './email-verification/email-verification.module';
 import { ResetPasswordModule } from './reset-password/reset-password.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
 	imports: [
@@ -30,6 +31,7 @@ import { ResetPasswordModule } from './reset-password/reset-password.module';
 		EmailModule,
 		EmailVerificationModule,
 		ResetPasswordModule,
+		DocumentsModule,
 	],
 })
 export class AppModule {}

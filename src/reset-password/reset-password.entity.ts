@@ -1,11 +1,9 @@
+import { AbstractEntity } from 'src/common/common.entity';
 import { User } from 'src/users/users.entity';
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 
 @Entity()
-export class ResetPassword {
-	@PrimaryGeneratedColumn({ type: 'bigint' })
-	id: number;
-
+export class ResetPassword extends AbstractEntity {
 	@Column()
 	expiresAt: Date;
 
