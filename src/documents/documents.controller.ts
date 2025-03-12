@@ -2,7 +2,10 @@ import {
 	Body,
 	ClassSerializerInterceptor,
 	Controller,
+	Delete,
 	Get,
+	Param,
+	ParseUUIDPipe,
 	Post,
 	Query,
 	UseGuards,
@@ -27,12 +30,17 @@ export class DocumentsController {
 	@ApiResponse({ status: 200, type: PaginatedModel })
 	@Get('my')
 	getMyDocument(@User() { sub }: JwtDto, @Query() pageOptionsDto: PageOptionsDto) {
-		return this.documentsService.getAllByUserId(+sub, pageOptionsDto);
+		return this.documentsService.getAllByUserId(sub, pageOptionsDto);
 	}
 
 	@ApiResponse({ status: 201, type: Document })
 	@Post()
 	createDocument(@User() { sub }: JwtDto, @Body() dto: CreateDocumentDto) {
-		return this.documentsService.createDocument(+sub, dto);
+		return this.documentsService.createDocument(sub, dto);
+	}
+
+	@Delete(':id')
+	delete(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string) {
+		return this.documentsService.delete(sub, id);
 	}
 }

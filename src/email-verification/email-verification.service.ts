@@ -20,7 +20,7 @@ export class EmailVerificationService {
 		return this.emailVerificationRepository.findOneBy({ user });
 	}
 
-	deleteById(id: number) {
+	deleteById(id: string) {
 		return this.emailVerificationRepository.delete(id);
 	}
 

@@ -1,7 +1,7 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class JwtDto {
-	@IsString()
+	@IsUUID()
 	sub: string;
 
 	@IsString()

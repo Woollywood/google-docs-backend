@@ -8,6 +8,7 @@ import { EmailModule } from './email/email.module';
 import { EmailVerificationModule } from './email-verification/email-verification.module';
 import { ResetPasswordModule } from './reset-password/reset-password.module';
 import { DocumentsModule } from './documents/documents.module';
+import { CaslModule } from './casl/casl.module';
 
 @Module({
 	imports: [
@@ -32,6 +33,7 @@ import { DocumentsModule } from './documents/documents.module';
 		EmailVerificationModule,
 		ResetPasswordModule,
 		DocumentsModule,
+		CaslModule,
 	],
 })
 export class AppModule {}

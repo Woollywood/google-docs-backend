@@ -22,13 +22,15 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
 	}
 
 	async validate(req: Request, payload: JwtDto): Promise<JwtDto> {
-		const user = await this.usersService.findById(+payload.sub);
+		const user = await this.usersService.findById(payload.sub);
+
 		if (!user || !user.emailVerified) {
 			throw new UnauthorizedException();
 		}
 
 		const accessToken = req.get('Authorization')?.replace('Bearer', '').trim() || '';
 		const session = await this.sessionsService.findByIdAndAccessToken(user.id, accessToken);
+
 		if (!session) {
 			throw new UnauthorizedException();
 		}

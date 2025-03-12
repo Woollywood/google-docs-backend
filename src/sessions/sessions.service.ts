@@ -15,11 +15,11 @@ export class SessionsService {
 		private readonly usersService: UsersService,
 	) {}
 
-	findById(id: number) {
+	findById(id: string) {
 		return this.sessionRepository.findOneBy({ id });
 	}
 
-	async findByIdAndTokens(userId: number, accessToken: string, refreshToken: string) {
+	async findByIdAndTokens(userId: string, accessToken: string, refreshToken: string) {
 		const user = await this.usersService.findById(userId);
 		if (!user) {
 			return null;
@@ -46,7 +46,7 @@ export class SessionsService {
 		return null;
 	}
 
-	async findByIdAndRefreshToken(userId: number, refreshToken: string) {
+	async findByIdAndRefreshToken(userId: string, refreshToken: string) {
 		const user = await this.usersService.findById(userId);
 		if (!user) {
 			return null;
@@ -66,7 +66,7 @@ export class SessionsService {
 		return null;
 	}
 
-	async findByIdAndAccessToken(userId: number, accessToken: string) {
+	async findByIdAndAccessToken(userId: string, accessToken: string) {
 		const user = await this.usersService.findById(userId);
 		if (!user) {
 			return null;
@@ -95,11 +95,11 @@ export class SessionsService {
 		return this.sessionRepository.save(createdSession);
 	}
 
-	update(sessionId: number, dto: UpdateSessionDto) {
+	update(sessionId: string, dto: UpdateSessionDto) {
 		return this.sessionRepository.update(sessionId, dto);
 	}
 
-	remove(sessionId: number) {
+	remove(sessionId: string) {
 		return this.sessionRepository.delete(sessionId);
 	}
 }

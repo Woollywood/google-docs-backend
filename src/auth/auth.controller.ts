@@ -34,7 +34,7 @@ export class AuthController {
 	@HttpCode(204)
 	@Post('sign-out')
 	signOut(@User() { sub }: JwtDto, @AccessToken() accessToken: string) {
-		return this.authService.signOut(+sub, accessToken);
+		return this.authService.signOut(sub, accessToken);
 	}
 
 	@ApiResponse({ status: 201, type: AuthTokensDto })

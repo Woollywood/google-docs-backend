@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, OmittedUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './users.entity';
@@ -18,7 +18,7 @@ export class UsersService {
 		return this.usersRepository.find();
 	}
 
-	findById(id: number) {
+	findById(id: string) {
 		return this.usersRepository.findOne({ where: { id }, relations: { sessions: true } });
 	}
 
@@ -30,11 +30,15 @@ export class UsersService {
 		return this.usersRepository.findOne({ where: { email }, relations: { sessions: true } });
 	}
 
-	update(id: number, dto: UpdateUserDto) {
+	findByCredentials({ email, username }: OmittedUserDto) {
+		return this.usersRepository.findOne({ where: { email, username } });
+	}
+
+	update(id: string, dto: UpdateUserDto) {
 		return this.usersRepository.update(id, dto);
 	}
 
-	delete(id: number) {
+	delete(id: string) {
 		return this.usersRepository.delete(id);
 	}
 }

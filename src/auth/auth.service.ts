@@ -21,9 +21,14 @@ export class AuthService {
 	) {}
 
 	async signUp(dto: CreateUserDto) {
-		const isUserExists = await this.usersService.findByUsername(dto.username);
-		if (isUserExists) {
-			throw new BadRequestException('User already exists');
+		const isUsernameExists = await this.usersService.findByUsername(dto.username);
+		if (isUsernameExists) {
+			throw new BadRequestException('This username is already taken');
+		}
+
+		const isEmailExists = await this.usersService.findByEmail(dto.email);
+		if (isEmailExists) {
+			throw new BadRequestException('This email is already taken');
 		}
 
 		const hashedPassword = await this.hashData(dto.password);
@@ -41,9 +46,9 @@ export class AuthService {
 	}
 
 	async signIn(dto: CreateUserDto) {
-		const user = await this.usersService.findByUsername(dto.username);
+		const user = await this.usersService.findByCredentials(dto);
 		if (!user) {
-			throw new BadRequestException('User does not exist');
+			throw new BadRequestException('Invalid username or email');
 		}
 
 		const passwordMatches = await argon2.verify(user.password, dto.password);
@@ -71,7 +76,7 @@ export class AuthService {
 		return tokens;
 	}
 
-	async signOut(userId: number, accessToken: string) {
+	async signOut(userId: string, accessToken: string) {
 		const session = await this.sessionsService.findByIdAndAccessToken(userId, accessToken);
 		if (!session) {
 			throw new BadRequestException('Session not found');
@@ -85,12 +90,12 @@ export class AuthService {
 				secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
 			});
 
-			const dbUser = await this.usersService.findById(+user.sub);
+			const dbUser = await this.usersService.findById(user.sub);
 			if (!dbUser?.emailVerified) {
 				throw new UnauthorizedException();
 			}
 
-			const session = await this.sessionsService.findByIdAndRefreshToken(+user.sub, refreshToken);
+			const session = await this.sessionsService.findByIdAndRefreshToken(user.sub, refreshToken);
 
 			if (!session) {
 				throw new UnauthorizedException();

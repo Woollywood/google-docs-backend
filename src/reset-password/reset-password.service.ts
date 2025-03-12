@@ -20,7 +20,7 @@ export class ResetPasswordService {
 		return this.resetPasswordRepository.findOneBy({ user });
 	}
 
-	deleteById(id: number) {
+	deleteById(id: string) {
 		return this.resetPasswordRepository.delete(id);
 	}
 

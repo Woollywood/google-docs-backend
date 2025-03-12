@@ -15,6 +15,6 @@ export class UsersController {
 	@ApiResponse({ status: 200, type: UserEntity })
 	@Get('/me')
 	getMe(@User() { sub }: JwtDto) {
-		return this.usersService.findById(+sub);
+		return this.usersService.findById(sub);
 	}
 }
