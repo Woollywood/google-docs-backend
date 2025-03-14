@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AbstractEntity } from 'src/common/common.entity';
 import { Document } from 'src/documents/documents.entity';
-import { Session } from 'src/sessions/sessions.entities';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Organization } from 'src/organizations/organizations.entity';
+import { Session } from 'src/sessions/sessions.entity';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity()
 export class User extends AbstractEntity {
@@ -29,4 +30,19 @@ export class User extends AbstractEntity {
 	@ApiProperty({ type: [Document] })
 	@OneToMany(() => Document, (document) => document.user)
 	documents?: Document[];
+
+	@ApiProperty({ type: () => [Organization] })
+	@ManyToMany(() => Organization, (organization) => organization.members)
+	@JoinTable()
+	organizations?: Organization[];
+
+	@ApiProperty({ type: () => Organization })
+	@ManyToOne(() => Organization, (organization) => organization.activeUsers)
+	@JoinColumn()
+	currentOrganization: Organization;
+
+	@ApiProperty({ type: () => [Organization] })
+	@OneToMany(() => Organization, (organization) => organization.owner)
+	@JoinColumn()
+	ownedOrganizations?: Organization[];
 }

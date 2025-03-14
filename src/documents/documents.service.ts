@@ -8,22 +8,35 @@ import { PageOptionsDto } from 'src/common/dto/pageOptions.dto';
 import { PageMetaDto } from 'src/common/dto/pageMeta.dto';
 import { Actions, CaslAbilityFactory } from 'src/casl/casl-ability.factory';
 import { UpdateDocumentDto } from './dto/update-document.dto';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class DocumentsService {
 	constructor(
 		@InjectRepository(Document) private readonly documentsRepository: Repository<Document>,
 		private readonly caslAbilityFactory: CaslAbilityFactory,
+		private readonly usersService: UsersService,
 	) {}
 
 	async getAllByUserId(userId: string, pageOptionsDto: PageOptionsDto, title: string): Promise<PageDto<Document>> {
 		const { skip, order, take } = pageOptionsDto;
 		const [entities, itemCount] = await this.documentsRepository.findAndCount({
-			where: { user: { id: userId }, title: ILike(`%${title}%`) },
+			where: [
+				{
+					user: { id: userId },
+					title: ILike(`%${title}%`),
+				},
+				{
+					title: ILike(`%${title}%`),
+					organization: {
+						members: { id: userId },
+					},
+				},
+			],
 			skip,
 			order: { createdAt: order },
 			take,
-			loadEagerRelations: true,
+			relations: { organization: true },
 		});
 
 		const pageMetaDto = new PageMetaDto({ itemCount, pageOptionsDto });
@@ -44,13 +57,34 @@ export class DocumentsService {
 		}
 	}
 
-	createDocument(userId: string, dto: CreateDocumentDto) {
-		const createdDocument = this.documentsRepository.create({ ...dto, user: { id: userId } });
+	async createDocument(userId: string, dto: CreateDocumentDto) {
+		const user = await this.usersService.findById(userId, { currentOrganization: true });
+		if (!user) {
+			throw new BadRequestException();
+		}
+
+		let createdDocument: Document | null = null;
+		if (user.currentOrganization) {
+			createdDocument = this.documentsRepository.create({
+				...dto,
+				user: { id: userId },
+				organization: { id: user?.currentOrganization.id },
+			});
+		} else {
+			createdDocument = this.documentsRepository.create({
+				...dto,
+				user: { id: userId },
+			});
+		}
+
 		return this.documentsRepository.save(createdDocument);
 	}
 
 	async delete(userId: string, id: string) {
-		const document = await this.documentsRepository.findOne({ where: { id }, relations: { user: true } });
+		const document = await this.documentsRepository.findOne({
+			where: { id },
+			relations: { user: true, organization: true },
+		});
 		if (!document) {
 			throw new BadRequestException();
 		}

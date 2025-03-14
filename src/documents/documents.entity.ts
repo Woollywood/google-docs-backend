@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AbstractEntity } from 'src/common/common.entity';
+import { Organization } from 'src/organizations/organizations.entity';
 import { User } from 'src/users/users.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Document extends AbstractEntity {
@@ -16,4 +17,9 @@ export class Document extends AbstractEntity {
 	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, (user) => user.documents)
 	user: User;
+
+	@ApiProperty({ type: () => User })
+	@ManyToOne(() => Organization, (organization) => organization.documents)
+	@JoinColumn()
+	organization: Organization;
 }

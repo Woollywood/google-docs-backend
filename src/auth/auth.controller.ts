@@ -2,7 +2,7 @@ import { Controller, Post, Body, UseGuards, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AccessTokenGuard } from './accessToken.guard';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AccessToken, User } from './auth.decorator';
 import { EmailVerificationService } from 'src/email-verification/email-verification.service';
 import { AuthTokensDto, TokenDto, RefreshDto, ResetPasswordLinkDto } from './dto/tokens.dto';
@@ -30,6 +30,7 @@ export class AuthController {
 	}
 
 	@ApiResponse({ status: 200 })
+	@ApiBearerAuth()
 	@UseGuards(AccessTokenGuard)
 	@HttpCode(204)
 	@Post('sign-out')

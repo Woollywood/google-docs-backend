@@ -18,19 +18,20 @@ import { AccessTokenGuard } from 'src/auth/accessToken.guard';
 import { User } from 'src/auth/auth.decorator';
 import { JwtDto } from 'src/auth/dto/auth.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Document } from './documents.entity';
 import { PageOptionsDto } from 'src/common/dto/pageOptions.dto';
-import { PaginatedModel } from './dto/paginated-document.dto';
+import { PaginatedDocumentModel } from './dto/paginated-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 
+@ApiBearerAuth()
 @UseGuards(AccessTokenGuard)
 @Controller('documents')
 @UseInterceptors(ClassSerializerInterceptor)
 export class DocumentsController {
 	constructor(private readonly documentsService: DocumentsService) {}
 
-	@ApiResponse({ status: 200, type: PaginatedModel })
+	@ApiResponse({ status: 200, type: PaginatedDocumentModel })
 	@Get('my')
 	getMyDocuments(
 		@User() { sub }: JwtDto,
@@ -48,7 +49,7 @@ export class DocumentsController {
 
 	@ApiResponse({ status: 200, type: Document })
 	@Get(':id')
-	getDocument(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string) {
+	async getDocument(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string) {
 		return this.documentsService.getDocumentById(sub, id);
 	}
 

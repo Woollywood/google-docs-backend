@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Session } from './sessions.entities';
+import { Session } from './sessions.entity';
 import { Repository } from 'typeorm';
 import { CreateSessionDto } from './dto/createSession.dto';
 import { UpdateSessionDto } from './dto/updateSession.dto';
@@ -20,7 +20,7 @@ export class SessionsService {
 	}
 
 	async findByIdAndTokens(userId: string, accessToken: string, refreshToken: string) {
-		const user = await this.usersService.findById(userId);
+		const user = await this.usersService.findById(userId, { sessions: true });
 		if (!user) {
 			return null;
 		}
@@ -47,7 +47,7 @@ export class SessionsService {
 	}
 
 	async findByIdAndRefreshToken(userId: string, refreshToken: string) {
-		const user = await this.usersService.findById(userId);
+		const user = await this.usersService.findById(userId, { sessions: true });
 		if (!user) {
 			return null;
 		}
@@ -67,7 +67,7 @@ export class SessionsService {
 	}
 
 	async findByIdAndAccessToken(userId: string, accessToken: string) {
-		const user = await this.usersService.findById(userId);
+		const user = await this.usersService.findById(userId, { sessions: true });
 		if (!user) {
 			return null;
 		}
