@@ -19,10 +19,10 @@ import { User } from 'src/auth/auth.decorator';
 import { JwtDto } from 'src/auth/dto/auth.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-import { Document } from './documents.entity';
 import { PageOptionsDto } from 'src/common/dto/pageOptions.dto';
 import { PaginatedDocumentModel } from './dto/paginated-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
+import { DocumentDto } from './dto/document.dto';
 
 @ApiBearerAuth()
 @UseGuards(AccessTokenGuard)
@@ -41,23 +41,25 @@ export class DocumentsController {
 		return this.documentsService.getAllByUserId(sub, pageOptionsDto, search);
 	}
 
-	@ApiResponse({ status: 201, type: Document })
+	@ApiResponse({ status: 201, type: DocumentDto })
 	@Post()
 	createDocument(@User() { sub }: JwtDto, @Body() dto: CreateDocumentDto) {
 		return this.documentsService.createDocument(sub, dto);
 	}
 
-	@ApiResponse({ status: 200, type: Document })
+	@ApiResponse({ status: 200, type: DocumentDto })
 	@Get(':id')
 	async getDocument(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string) {
 		return this.documentsService.getDocumentById(sub, id);
 	}
 
+	@ApiResponse({ type: DocumentDto })
 	@Delete(':id')
 	delete(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string) {
 		return this.documentsService.delete(sub, id);
 	}
 
+	@ApiResponse({ type: DocumentDto })
 	@Patch(':id')
 	path(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateDocumentDto) {
 		return this.documentsService.update(sub, id, dto);

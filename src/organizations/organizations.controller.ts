@@ -5,8 +5,8 @@ import { User } from 'src/auth/auth.decorator';
 import { JwtDto } from 'src/auth/dto/auth.dto';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-import { Organization } from './organizations.entity';
 import { MemberDto } from './dto/members.dto';
+import { OrganizationDto } from './dto/organization.dto';
 
 @ApiBearerAuth()
 @UseGuards(AccessTokenGuard)
@@ -14,13 +14,13 @@ import { MemberDto } from './dto/members.dto';
 export class OrganizationsController {
 	constructor(private readonly organizationsService: OrganizationsService) {}
 
-	@ApiResponse({ status: 200, type: [Organization] })
+	@ApiResponse({ status: 200, type: [OrganizationDto] })
 	@Get('my')
 	getMy(@User() { sub }: JwtDto) {
 		return this.organizationsService.getMy(sub);
 	}
 
-	@ApiResponse({ status: 200, type: Organization })
+	@ApiResponse({ status: 200, type: OrganizationDto })
 	@Get('current')
 	getCurrent(@User() { sub }: JwtDto) {
 		return this.organizationsService.getCurrent(sub);
@@ -36,22 +36,25 @@ export class OrganizationsController {
 		return this.organizationsService.leave(sub);
 	}
 
-	@ApiResponse({ status: 200, type: Organization })
+	@ApiResponse({ status: 200, type: OrganizationDto })
 	@Post('new')
 	create(@User() { sub }: JwtDto, @Body() dto: CreateOrganizationDto) {
 		return this.organizationsService.create(sub, dto);
 	}
 
+	@ApiResponse({ type: OrganizationDto })
 	@Delete(':id')
 	delete(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string) {
 		return this.organizationsService.delete(sub, id);
 	}
 
+	@ApiResponse({ status: 201, type: OrganizationDto })
 	@Post('members')
 	addMember(@Body() { id, username }: MemberDto) {
 		return this.organizationsService.addMember(username, id);
 	}
 
+	@ApiResponse({ type: OrganizationDto })
 	@Delete('members')
 	kickMember(@Body() { id, username }: MemberDto) {
 		return this.organizationsService.kickMember(username, id);

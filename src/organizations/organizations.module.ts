@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Organization } from './organizations.entity';
 import { OrganizationsController } from './organizations.controller';
 import { CaslModule } from 'src/casl/casl.module';
 import { UsersModule } from 'src/users/users.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([Organization]), CaslModule, UsersModule],
+	imports: [CaslModule, UsersModule, PrismaModule],
 	providers: [OrganizationsService],
 	controllers: [OrganizationsController],
 })

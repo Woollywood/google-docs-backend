@@ -1,39 +1,37 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { EmailService } from 'src/email/email.service';
-import { EmailVerification } from './email-verification.entity';
-import { Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
-import { User } from 'src/users/users.entity';
 import * as moment from 'moment';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class EmailVerificationService {
 	constructor(
-		@InjectRepository(EmailVerification)
-		private readonly emailVerificationRepository: Repository<EmailVerification>,
+		private readonly prisma: PrismaService,
 		private readonly emailService: EmailService,
 		private readonly usersService: UsersService,
 	) {}
 
-	findByUser(user: User) {
-		return this.emailVerificationRepository.findOneBy({ user });
+	findByUserId(userId: string) {
+		return this.prisma.emailVerification.findUnique({ where: { userId } });
 	}
 
 	deleteById(id: string) {
-		return this.emailVerificationRepository.delete(id);
+		return this.prisma.emailVerification.delete({ where: { id } });
 	}
 
-	async sendVerificationLink(user: User) {
-		const rawEntity = this.emailVerificationRepository.create({ expiresAt: moment().add(1, 'day'), user });
-		const createdEntity = await this.emailVerificationRepository.save(rawEntity);
-		return this.emailService.sendVerificationEmail(user.email, createdEntity.token);
+	async sendVerificationLink(userId: string) {
+		const createdEntity = await this.prisma.emailVerification.create({
+			data: { expiresAt: moment().add(1, 'day').toDate(), user: { connect: { id: userId } } },
+			include: { user: true },
+		});
+		return this.emailService.sendVerificationEmail(createdEntity.user.email, createdEntity.token);
 	}
 
 	async verify(token: string) {
-		const verificationLink = await this.emailVerificationRepository.findOne({
+		const verificationLink = await this.prisma.emailVerification.findUnique({
 			where: { token },
-			relations: { user: true },
+			include: { user: true },
 		});
 
 		if (!verificationLink) {
@@ -46,6 +44,6 @@ export class EmailVerificationService {
 
 		const user = verificationLink.user;
 		await this.usersService.update(user.id, { emailVerified: true });
-		return this.emailVerificationRepository.delete(verificationLink);
+		return this.prisma.emailVerification.delete({ where: { id: verificationLink.id } });
 	}
 }

@@ -8,7 +8,7 @@ export class EmailService {
 	private instance: Resend | null = null;
 
 	constructor(private readonly configService: ConfigService) {
-		this.instance = new Resend(process.env.RESEND_API_KEY);
+		this.instance = new Resend(configService.get<string>('RESEND_API_KEY'));
 	}
 
 	sendVerificationEmail(email: string, token: string) {

@@ -1,5 +1,4 @@
-import { IsString, ValidateNested } from 'class-validator';
-import { User } from 'src/users/users.entity';
+import { IsString, IsUUID } from 'class-validator';
 
 export class CreateSessionDto {
 	@IsString()
@@ -8,6 +7,6 @@ export class CreateSessionDto {
 	@IsString()
 	refreshToken: string;
 
-	@ValidateNested()
-	user: User;
+	@IsUUID()
+	userId: string;
 }

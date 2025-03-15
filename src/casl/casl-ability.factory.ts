@@ -1,8 +1,8 @@
 import { AbilityBuilder, AbilityTuple, MatchConditions, PureAbility } from '@casl/ability';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Document } from 'src/documents/documents.entity';
-import { Organization } from 'src/organizations/organizations.entity';
-import { UsersService } from 'src/users/users.service';
+import { DocumentDto } from 'src/documents/dto/document.dto';
+import { OrganizationDto } from 'src/organizations/dto/organization.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 export enum Actions {
 	Manage = 'manage',
@@ -17,10 +17,13 @@ const lambdaMatcher = (matchConditions: MatchConditions) => matchConditions;
 
 @Injectable()
 export class CaslAbilityFactory {
-	constructor(private readonly usersService: UsersService) {}
+	constructor(private readonly prisma: PrismaService) {}
 
 	async createForUser(userId: string) {
-		const user = await this.usersService.findById(userId, { organizations: { members: true } });
+		const user = await this.prisma.user.findUnique({
+			where: { id: userId },
+			include: { memberOf: { include: { members: true } } },
+		});
 
 		if (!user) {
 			throw new BadRequestException();
@@ -28,27 +31,27 @@ export class CaslAbilityFactory {
 
 		const { can, build } = new AbilityBuilder<AppAbility>(PureAbility);
 
-		const { id, organizations } = user;
+		const { id, memberOf } = user;
 
-		can(Actions.Create, Document);
-		can(Actions.Read, Document);
+		can(Actions.Create, DocumentDto);
+		can(Actions.Read, DocumentDto);
 		can(
 			Actions.Update,
-			Document,
-			({ user, organization }) =>
-				user.id === id || (organization && organizations?.some((item) => item.id !== organization.id)) || false,
+			DocumentDto,
+			({ userId, organizationId }) =>
+				userId === id || (memberOf && memberOf?.some((item) => item.id !== organizationId)) || false,
 		);
 		can(
 			Actions.Delete,
-			Document,
-			({ user, organization }) =>
-				user.id === id || (organization && organizations?.some((item) => item.id !== organization.id)) || false,
+			DocumentDto,
+			({ userId, organizationId }) =>
+				userId === id || (memberOf && memberOf?.some((item) => item.id !== organizationId)) || false,
 		);
 
-		can(Actions.Create, Organization);
-		can(Actions.Read, Organization);
-		can(Actions.Update, Organization, ({ owner }) => owner.id === id);
-		can(Actions.Delete, Organization, ({ owner }) => owner.id === id);
+		can(Actions.Create, OrganizationDto);
+		can(Actions.Read, OrganizationDto);
+		can(Actions.Update, OrganizationDto, ({ ownerId }) => ownerId === id);
+		can(Actions.Delete, OrganizationDto, ({ ownerId }) => ownerId === id);
 
 		return build({
 			conditionsMatcher: lambdaMatcher,

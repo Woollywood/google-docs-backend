@@ -1,71 +1,54 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Organization } from './organizations.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { Actions, CaslAbilityFactory } from 'src/casl/casl-ability.factory';
-import { UsersService } from 'src/users/users.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { OrganizationDto } from './dto/organization.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class OrganizationsService {
 	constructor(
-		@InjectRepository(Organization) private readonly organizationsRepository: Repository<Organization>,
+		private readonly prisma: PrismaService,
 		private readonly caslAbilityFactory: CaslAbilityFactory,
-		private readonly usersService: UsersService,
 	) {}
 
 	findById(id: string) {
-		return this.organizationsRepository.findOne({ where: { id } });
+		return this.prisma.organization.findUnique({ where: { id } });
 	}
 
 	async getCurrent(userId: string) {
-		const user = await this.usersService.findById(userId, { currentOrganization: true });
+		const user = await this.prisma.user.findUnique({
+			where: { id: userId },
+			include: { activeOrganization: true },
+		});
 
 		if (!user) {
 			throw new BadRequestException();
 		}
 
-		return user.currentOrganization;
+		return user.activeOrganization;
 	}
 
 	async getMy(userId: string) {
-		return this.organizationsRepository.find({
-			where: { members: { id: userId } },
+		const user = await this.prisma.user.findUnique({
+			where: { id: userId },
+			include: { memberOf: true },
 		});
+		return user?.memberOf;
 	}
 
 	join(userId: string, id: string) {
-		return this.organizationsRepository
-			.createQueryBuilder()
-			.relation(Organization, 'activeUsers')
-			.of(id)
-			.add(userId);
+		return this.prisma.user.update({ where: { id: userId }, data: { activeOrganization: { connect: { id } } } });
 	}
 
 	async leave(userId: string) {
-		const user = await this.usersService.findById(userId, { currentOrganization: true });
-		if (!user) {
-			throw new BadRequestException();
-		}
-
-		if (!user.currentOrganization) {
-			throw new BadRequestException();
-		}
-
-		return this.organizationsRepository
-			.createQueryBuilder()
-			.relation(Organization, 'activeUsers')
-			.of(user.currentOrganization.id)
-			.remove(userId);
+		return this.prisma.user.update({ where: { id: userId }, data: { activeOrganizationId: null } });
 	}
 
 	create(userId: string, dto: CreateOrganizationDto) {
-		const createdOrganization = this.organizationsRepository.create({
-			...dto,
-			owner: { id: userId },
-			members: [{ id: userId }],
+		return this.prisma.organization.create({
+			data: { ...dto, owner: { connect: { id: userId } }, members: { connect: { id: userId } } },
 		});
-		return this.organizationsRepository.save(createdOrganization);
 	}
 
 	async delete(userId: string, id: string) {
@@ -75,35 +58,18 @@ export class OrganizationsService {
 		}
 
 		const ability = await this.caslAbilityFactory.createForUser(userId);
-		if (ability.can(Actions.Delete, organization)) {
-			return this.organizationsRepository.delete(id);
+		if (ability.can(Actions.Delete, plainToInstance(OrganizationDto, organization))) {
+			return this.prisma.organization.delete({ where: { id } });
 		} else {
 			throw new ForbiddenException();
 		}
 	}
 
 	async addMember(username: string, id: string) {
-		const user = await this.usersService.findByUsername(username);
-		if (!user) {
-			throw new NotFoundException();
-		}
-
-		return this.organizationsRepository.createQueryBuilder().relation(Organization, 'members').of(id).add(user.id);
+		return this.prisma.organization.update({ where: { id }, data: { members: { connect: { username } } } });
 	}
 
 	async kickMember(username: string, id: string) {
-		const user = await this.usersService.findByUsername(username);
-		if (!user) {
-			throw new NotFoundException();
-		}
-
-		const { id: userId } = user;
-		return this.organizationsRepository
-			.createQueryBuilder()
-			.delete()
-			.from('members')
-			.where('id = :id', { id })
-			.andWhere('id = :userId', { userId })
-			.execute();
+		return this.prisma.organization.update({ where: { id }, data: { members: { delete: { username } } } });
 	}
 }

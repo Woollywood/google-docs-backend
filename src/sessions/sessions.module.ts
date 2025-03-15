@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
-import { UsersModule } from 'src/users/users.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Session } from './sessions.entity';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-	imports: [UsersModule, TypeOrmModule.forFeature([Session])],
+	imports: [PrismaModule],
 	providers: [SessionsService],
 	exports: [SessionsService],
 })

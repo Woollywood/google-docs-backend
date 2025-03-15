@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { CaslAbilityFactory } from './casl-ability.factory';
-import { UsersModule } from 'src/users/users.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-	imports: [UsersModule],
+	imports: [PrismaModule],
 	providers: [CaslAbilityFactory],
 	exports: [CaslAbilityFactory],
 })

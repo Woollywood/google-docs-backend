@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 import { EmailVerificationService } from './email-verification.service';
 import { EmailModule } from 'src/email/email.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmailVerification } from './email-verification.entity';
 import { UsersModule } from 'src/users/users.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([EmailVerification]), EmailModule, UsersModule],
+	imports: [EmailModule, UsersModule, PrismaModule],
 	providers: [EmailVerificationService],
 	exports: [EmailVerificationService],
 })

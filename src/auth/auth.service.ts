@@ -4,11 +4,11 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { SessionsService } from 'src/sessions/sessions.service';
-import { User } from 'src/users/users.entity';
 import { EmailVerificationService } from 'src/email-verification/email-verification.service';
 import { AuthTokensDto, RefreshDto } from './dto/tokens.dto';
 import { JwtDto } from './dto/auth.dto';
 import * as argon2 from 'argon2';
+import { UserDto } from 'src/users/dto/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -37,11 +37,11 @@ export class AuthService {
 		const { accessToken, refreshToken } = tokens;
 		const { hashedAccessToken, hashedRefreshToken } = await this.getHashedTokens({ accessToken, refreshToken });
 		await this.sessionsService.create({
-			user: newUser,
+			userId: newUser.id,
 			accessToken: hashedAccessToken,
 			refreshToken: hashedRefreshToken,
 		});
-		await this.emailVerificationService.sendVerificationLink(newUser);
+		await this.emailVerificationService.sendVerificationLink(newUser.id);
 		return tokens;
 	}
 
@@ -57,11 +57,11 @@ export class AuthService {
 		}
 
 		if (!user.emailVerified) {
-			const emailVerificationLink = await this.emailVerificationService.findByUser(user);
+			const emailVerificationLink = await this.emailVerificationService.findByUserId(user.id);
 			if (emailVerificationLink) {
 				await this.emailVerificationService.deleteById(emailVerificationLink.id);
 			}
-			await this.emailVerificationService.sendVerificationLink(user);
+			await this.emailVerificationService.sendVerificationLink(user.id);
 			throw new BadRequestException('Email not confirmed. Check your email for a verification link');
 		}
 
@@ -69,7 +69,7 @@ export class AuthService {
 		const { accessToken, refreshToken } = tokens;
 		const { hashedAccessToken, hashedRefreshToken } = await this.getHashedTokens({ accessToken, refreshToken });
 		await this.sessionsService.create({
-			user,
+			userId: user.id,
 			accessToken: hashedAccessToken,
 			refreshToken: hashedRefreshToken,
 		});
@@ -119,7 +119,7 @@ export class AuthService {
 		return argon2.hash(data);
 	}
 
-	private dbUserToJwtPayload(user: User): JwtDto {
+	private dbUserToJwtPayload(user: UserDto): JwtDto {
 		return { sub: String(user.id), email: user.email, username: user.username };
 	}
 

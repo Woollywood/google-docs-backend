@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ResetPasswordService } from './reset-password.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ResetPassword } from './reset-password.entity';
 import { EmailModule } from 'src/email/email.module';
 import { UsersModule } from 'src/users/users.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([ResetPassword]), EmailModule, UsersModule],
+	imports: [EmailModule, UsersModule, PrismaModule],
 	providers: [ResetPasswordService],
 	exports: [ResetPasswordService],
 })

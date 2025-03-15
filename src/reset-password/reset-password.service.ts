@@ -1,27 +1,24 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ResetPassword } from './reset-password.entity';
-import { Repository } from 'typeorm';
 import { EmailService } from 'src/email/email.service';
 import { UsersService } from 'src/users/users.service';
-import { User } from 'src/users/users.entity';
 import * as moment from 'moment';
 import * as argon2 from 'argon2';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ResetPasswordService {
 	constructor(
-		@InjectRepository(ResetPassword) private readonly resetPasswordRepository: Repository<ResetPassword>,
+		private readonly prisma: PrismaService,
 		private readonly emailService: EmailService,
 		private readonly usersService: UsersService,
 	) {}
 
-	findByUser(user: User) {
-		return this.resetPasswordRepository.findOneBy({ user });
+	findByUserId(userId: string) {
+		return this.prisma.resetPassword.findUnique({ where: { userId } });
 	}
 
 	deleteById(id: string) {
-		return this.resetPasswordRepository.delete(id);
+		return this.prisma.resetPassword.delete({ where: { id } });
 	}
 
 	async sendResetLink(email: string, newPassword: string) {
@@ -30,25 +27,26 @@ export class ResetPasswordService {
 			throw new BadRequestException('User does not exist');
 		}
 
-		const existingLink = await this.findByUser(user);
+		const existingLink = await this.findByUserId(user.id);
 		if (existingLink) {
 			await this.deleteById(existingLink.id);
 		}
 
 		const hashedNewPassword = await this.hashData(newPassword);
-		const rawEntity = this.resetPasswordRepository.create({
-			expiresAt: moment().add(1, 'day'),
-			newPassword: hashedNewPassword,
-			user,
+		const createdEntity = await this.prisma.resetPassword.create({
+			data: {
+				expiresAt: moment().add(1, 'day').toDate(),
+				newPassword: hashedNewPassword,
+				user: { connect: { id: user.id } },
+			},
 		});
-		const createdEntity = await this.resetPasswordRepository.save(rawEntity);
 		return this.emailService.sendResetPassword(user.email, createdEntity.token);
 	}
 
 	async reset(token: string) {
-		const resetPasswordLink = await this.resetPasswordRepository.findOne({
+		const resetPasswordLink = await this.prisma.resetPassword.findUnique({
 			where: { token },
-			relations: { user: true },
+			include: { user: true },
 		});
 		if (!resetPasswordLink) {
 			throw new BadRequestException('Invalid token');
@@ -60,7 +58,7 @@ export class ResetPasswordService {
 
 		const user = resetPasswordLink.user;
 		await this.usersService.update(user.id, { password: resetPasswordLink.newPassword });
-		return this.resetPasswordRepository.delete(resetPasswordLink);
+		return this.prisma.resetPassword.delete({ where: { id: resetPasswordLink.id } });
 	}
 
 	private hashData(data: string) {

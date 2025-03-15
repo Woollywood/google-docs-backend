@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id            String   @id @default(uuid())
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    username      String   @unique
+    email         String   @unique
+    emailVerified Boolean  @default(false)
+    password      String
+
+    sessions             Session[]
+    resetPassword        ResetPassword?
+    emailVerification    EmailVerification?
+    document             Document[]
+    activeOrganization   Organization?      @relation("ActiveOrganization", fields: [activeOrganizationId], references: [id], onDelete: Cascade)
+    activeOrganizationId String?            @unique
+    ownedOrganizations   Organization[]     @relation("OrganizationOwner")
+    memberOf             Organization[]     @relation("OrganizationMembers")
+}
+
+model Session {
+    id           String   @id @default(uuid())
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+    accessToken  String   @unique
+    refreshToken String   @unique
+
+    user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String?
+
+    @@unique([accessToken, refreshToken])
+}
+
+model ResetPassword {
+    id          String   @id @default(uuid())
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    expiresAt   DateTime
+    token       String   @unique @default(uuid())
+    newPassword String
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String @unique
+}
+
+model EmailVerification {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    expiresAt DateTime
+    token     String   @unique @default(uuid())
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String @unique
+}
+
+model Document {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    title     String
+    content   String?
+
+    user           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId         String?
+    organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    organizationId String?
+}
+
+model Organization {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    title     String
+
+    documents   Document[]
+    owner       User       @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+    ownerId     String
+    members     User[]     @relation("OrganizationMembers")
+    activeUsers User[]     @relation("ActiveOrganization")
+}

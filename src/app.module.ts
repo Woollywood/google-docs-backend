@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SessionsModule } from './sessions/sessions.module';
@@ -10,23 +9,12 @@ import { ResetPasswordModule } from './reset-password/reset-password.module';
 import { DocumentsModule } from './documents/documents.module';
 import { CaslModule } from './casl/casl.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { PrismaService } from './prisma/prisma.service';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
 	imports: [
-		TypeOrmModule.forRootAsync({
-			imports: [ConfigModule.forRoot({ isGlobal: true })],
-			useFactory: (configService: ConfigService) => ({
-				type: 'postgres',
-				host: configService.get('DB_HOST'),
-				port: +configService.get('DB_PORT'),
-				username: configService.get('DB_USERNAME'),
-				password: configService.get('DB_PASSWORD'),
-				database: configService.get('DB_NAME'),
-				synchronize: true,
-				autoLoadEntities: true,
-			}),
-			inject: [ConfigService],
-		}),
+		ConfigModule.forRoot({ isGlobal: true }),
 		UsersModule,
 		AuthModule,
 		SessionsModule,
@@ -36,6 +24,8 @@ import { OrganizationsModule } from './organizations/organizations.module';
 		DocumentsModule,
 		CaslModule,
 		OrganizationsModule,
+		PrismaModule,
 	],
+	providers: [PrismaService],
 })
 export class AppModule {}
