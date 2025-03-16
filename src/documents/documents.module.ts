@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { DocumentsController } from './documents.controller';
-import { CaslModule } from 'src/casl/casl.module';
 import { UsersModule } from 'src/users/users.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { DocumentAbilityFactory } from './document-ability.factory';
 
 @Module({
-	imports: [CaslModule, UsersModule, PrismaModule],
+	imports: [UsersModule, PrismaModule],
 	controllers: [DocumentsController],
-	providers: [DocumentsService],
+	providers: [DocumentsService, DocumentAbilityFactory],
 	exports: [DocumentsService],
 })
 export class DocumentsModule {}

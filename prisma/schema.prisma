@@ -22,14 +22,16 @@ model User {
     emailVerified Boolean  @default(false)
     password      String
 
-    sessions             Session[]
-    resetPassword        ResetPassword?
-    emailVerification    EmailVerification?
-    document             Document[]
-    activeOrganization   Organization?      @relation("ActiveOrganization", fields: [activeOrganizationId], references: [id], onDelete: Cascade)
-    activeOrganizationId String?            @unique
-    ownedOrganizations   Organization[]     @relation("OrganizationOwner")
-    memberOf             Organization[]     @relation("OrganizationMembers")
+    sessions              Session[]
+    resetPassword         ResetPassword?
+    emailVerification     EmailVerification?
+    document              Document[]
+    activeOrganization    Organization?      @relation("ActiveOrganization", fields: [activeOrganizationId], references: [id], onDelete: Cascade)
+    activeOrganizationId  String?
+    ownedOrganizations    Organization[]     @relation("OrganizationOwner")
+    memberOf              Organization[]     @relation("OrganizationMembers")
+    NotificationRecipient Notification[]     @relation("NotificationRecipient")
+    NotificationSender    Notification[]     @relation("NotificationSender")
 }
 
 model Session {
@@ -87,9 +89,31 @@ model Organization {
     updatedAt DateTime @updatedAt
     title     String
 
-    documents   Document[]
-    owner       User       @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-    ownerId     String
-    members     User[]     @relation("OrganizationMembers")
-    activeUsers User[]     @relation("ActiveOrganization")
+    documents    Document[]
+    owner        User           @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+    ownerId      String
+    members      User[]         @relation("OrganizationMembers")
+    activeUsers  User[]         @relation("ActiveOrganization")
+    Notification Notification[]
+}
+
+enum NotificationType {
+    ORGANIZATION_INVITE
+}
+
+model Notification {
+    id        String           @id @default(uuid())
+    createdAt DateTime         @default(now())
+    updatedAt DateTime         @updatedAt
+    type      NotificationType
+    token     String           @unique @default(uuid())
+
+    recipient      User          @relation("NotificationRecipient", fields: [recipientId], references: [id])
+    recipientId    String
+    sender         User          @relation("NotificationSender", fields: [senderId], references: [id])
+    senderId       String
+    organization   Organization? @relation(fields: [organizationId], references: [id])
+    organizationId String?
+
+    @@unique([recipientId, organizationId])
 }

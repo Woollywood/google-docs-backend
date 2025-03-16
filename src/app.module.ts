@@ -7,10 +7,10 @@ import { EmailModule } from './email/email.module';
 import { EmailVerificationModule } from './email-verification/email-verification.module';
 import { ResetPasswordModule } from './reset-password/reset-password.module';
 import { DocumentsModule } from './documents/documents.module';
-import { CaslModule } from './casl/casl.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PrismaService } from './prisma/prisma.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
 	imports: [
@@ -22,9 +22,9 @@ import { PrismaModule } from './prisma/prisma.module';
 		EmailVerificationModule,
 		ResetPasswordModule,
 		DocumentsModule,
-		CaslModule,
 		OrganizationsModule,
 		PrismaModule,
+		NotificationsModule,
 	],
 	providers: [PrismaService],
 })

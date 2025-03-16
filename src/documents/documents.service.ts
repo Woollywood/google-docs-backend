@@ -3,17 +3,17 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { PageDto } from 'src/common/dto/page.dto';
 import { PageOptionsDto } from 'src/common/dto/pageOptions.dto';
 import { PageMetaDto } from 'src/common/dto/pageMeta.dto';
-import { Actions, CaslAbilityFactory } from 'src/casl/casl-ability.factory';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { DocumentDto } from './dto/document.dto';
 import { plainToInstance } from 'class-transformer';
+import { Actions, DocumentAbilityFactory } from './document-ability.factory';
 
 @Injectable()
 export class DocumentsService {
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly caslAbilityFactory: CaslAbilityFactory,
+		private readonly documentAbilityFactory: DocumentAbilityFactory,
 	) {}
 
 	async getAllByUserId(userId: string, pageOptionsDto: PageOptionsDto, title: string) {
@@ -46,7 +46,7 @@ export class DocumentsService {
 			throw new BadRequestException();
 		}
 
-		const ability = await this.caslAbilityFactory.createForUser(userId);
+		const ability = await this.documentAbilityFactory.createForUser(userId);
 		if (ability.can(Actions.Read, plainToInstance(DocumentDto, document))) {
 			return this.prisma.document.findUnique({ where: { id } });
 		} else {
@@ -79,8 +79,7 @@ export class DocumentsService {
 			throw new BadRequestException();
 		}
 
-		const ability = await this.caslAbilityFactory.createForUser(userId);
-
+		const ability = await this.documentAbilityFactory.createForUser(userId);
 		if (ability.can(Actions.Delete, plainToInstance(DocumentDto, document))) {
 			return this.prisma.document.delete({ where: { id } });
 		} else {
@@ -97,7 +96,7 @@ export class DocumentsService {
 			throw new BadRequestException();
 		}
 
-		const ability = await this.caslAbilityFactory.createForUser(userId);
+		const ability = await this.documentAbilityFactory.createForUser(userId);
 		if (ability.can(Actions.Delete, plainToInstance(DocumentDto, document))) {
 			return this.prisma.document.update({ where: { id }, data: dto });
 		} else {
