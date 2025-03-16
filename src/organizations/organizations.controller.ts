@@ -18,14 +18,15 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { OrganizationDto } from './dto/organization.dto';
 import { PageOptionsDto } from 'src/common/dto/pageOptions.dto';
-import { PaginatedUserModel } from 'src/users/dto/paginated-user.dto';
 import {
 	AcceptOrganizationInvitationDto,
 	RejectOrganizationInvitationDto,
 	SendOrganizationNotificationDto,
 } from './dto/notification.dto';
 import { NotificationDto } from 'src/notifications/dto/notification.dto';
-import { KickMemberDto } from './dto/members.dto';
+import { KickMemberDto, PaginatedMembersModel } from './dto/members.dto';
+import { ToggleOrganizationDto } from './dto/toggle-organization.dto';
+import { LeaveOrganizationDto } from './dto/leave-organization.dto';
 
 @ApiBearerAuth()
 @UseGuards(AccessTokenGuard)
@@ -45,16 +46,22 @@ export class OrganizationsController {
 		return this.organizationsService.getCurrent(sub);
 	}
 
+	@ApiResponse({ status: 200, type: OrganizationDto })
+	@Get(':id')
+	getOrganizationById(@Param('id', new ParseUUIDPipe()) id: string) {
+		return this.organizationsService.findById(id);
+	}
+
 	@ApiResponse({ type: OrganizationDto })
-	@Post('join/:id')
-	join(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string) {
-		return this.organizationsService.join(sub, id);
+	@Post('toggle')
+	toggle(@User() { sub }: JwtDto, @Body() { id }: ToggleOrganizationDto) {
+		return this.organizationsService.toggle(sub, id);
 	}
 
 	@ApiResponse({ type: OrganizationDto })
 	@Post('leave')
-	leave(@User() { sub }: JwtDto) {
-		return this.organizationsService.leave(sub);
+	leave(@User() { sub }: JwtDto, @Body() { id }: LeaveOrganizationDto) {
+		return this.organizationsService.leave(sub, id);
 	}
 
 	@ApiResponse({ status: 200, type: OrganizationDto })
@@ -69,9 +76,9 @@ export class OrganizationsController {
 		return this.organizationsService.delete(sub, id);
 	}
 
-	@ApiResponse({ status: 200, type: PaginatedUserModel })
-	@Get('members/:id')
-	members(
+	@ApiResponse({ status: 200, type: PaginatedMembersModel })
+	@Get(':id/members')
+	getMembers(
 		@User() { sub }: JwtDto,
 		@Param('id', ParseUUIDPipe) id: string,
 		@Query() pageOptionsDto: PageOptionsDto,

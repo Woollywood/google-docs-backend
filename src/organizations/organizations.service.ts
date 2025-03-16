@@ -10,6 +10,7 @@ import { PageDto } from 'src/common/dto/page.dto';
 import { CreateOrganizationNotificationDto } from './dto/notification.dto';
 import { KickMemberDto } from './dto/members.dto';
 import { Actions, OrganizationsAbilityFactory } from './organizations-ability.factory';
+import { omit } from 'lodash-es';
 
 @Injectable()
 export class OrganizationsService {
@@ -44,12 +45,20 @@ export class OrganizationsService {
 		return user?.memberOf;
 	}
 
-	join(userId: string, id: string) {
-		return this.prisma.user.update({ where: { id: userId }, data: { activeOrganization: { connect: { id } } } });
+	async toggle(userId: string, id: string | null) {
+		await this.prisma.user.update({ where: { id: userId }, data: { activeOrganizationId: id } });
+		const user = await this.prisma.user.findUnique({
+			where: { id: userId },
+			include: { activeOrganization: true },
+		});
+		return user?.activeOrganization;
 	}
 
-	async leave(userId: string) {
-		return this.prisma.user.update({ where: { id: userId }, data: { activeOrganizationId: null } });
+	leave(userId: string, id: string) {
+		return this.prisma.organization.update({
+			where: { id },
+			data: { members: { disconnect: { id: userId } }, activeUsers: { disconnect: { id: userId } } },
+		});
 	}
 
 	create(userId: string, dto: CreateOrganizationDto) {
@@ -74,33 +83,39 @@ export class OrganizationsService {
 
 	async getMembers(userId: string, id: string, pageOptionsDto: PageOptionsDto, search: string) {
 		const ability = await this.organizationsAbilityFactory.createForUser(userId);
+		const notifications = await this.prisma.notification.findMany({ where: { organizationId: id } });
 		const organization = await this.findById(id);
 		if (ability.can(Actions.Read, plainToInstance(OrganizationDto, organization))) {
 			const { skip, order, take } = pageOptionsDto;
 			const [entities, itemCount] = await Promise.all([
 				this.prisma.user.findMany({
 					where: {
-						id,
-						memberOf: {
-							some: { members: { some: { username: { contains: search, mode: 'insensitive' } } } },
-						},
+						id: { not: userId },
+						username: { contains: search, mode: 'insensitive' },
 					},
 					skip,
 					orderBy: { createdAt: order },
 					take,
+					include: { memberOf: true },
 				}),
 				this.prisma.user.count({
 					where: {
-						id,
-						memberOf: {
-							some: { members: { some: { username: { contains: search, mode: 'insensitive' } } } },
-						},
+						id: { not: userId },
+						username: { contains: search, mode: 'insensitive' },
 					},
 				}),
 			]);
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			const mappedEntities = entities.map((entity) => ({
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+				...omit(entity, ['memberOf']),
+				isMember: entity.memberOf.some((organization) => organization.id === id),
+				isInvitationSended: notifications.some((notification) => notification.recipientId === entity.id),
+			}));
+
 			const pageMetaDto = new PageMetaDto({ itemCount, pageOptionsDto });
-			return new PageDto(entities, pageMetaDto);
+			return new PageDto(mappedEntities, pageMetaDto);
 		} else {
 			throw new ForbiddenException();
 		}
