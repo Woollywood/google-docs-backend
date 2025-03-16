@@ -37,6 +37,19 @@ export class OrganizationsService {
 		return user.activeOrganization;
 	}
 
+	async getOrganizationById(userId: string, id: string) {
+		const organization = await this.findById(id);
+		if (!organization) {
+			throw new BadRequestException();
+		}
+		const ability = await this.organizationsAbilityFactory.createForUser(userId);
+		if (ability.can(Actions.Read, plainToInstance(OrganizationDto, organization))) {
+			return this.findById(id);
+		} else {
+			throw new ForbiddenException();
+		}
+	}
+
 	async getMy(userId: string) {
 		const user = await this.prisma.user.findUnique({
 			where: { id: userId },

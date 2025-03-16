@@ -48,8 +48,8 @@ export class OrganizationsController {
 
 	@ApiResponse({ status: 200, type: OrganizationDto })
 	@Get(':id')
-	getOrganizationById(@Param('id', new ParseUUIDPipe()) id: string) {
-		return this.organizationsService.findById(id);
+	getOrganizationById(@User() { sub }: JwtDto, @Param('id', new ParseUUIDPipe()) id: string) {
+		return this.organizationsService.getOrganizationById(sub, id);
 	}
 
 	@ApiResponse({ type: OrganizationDto })
