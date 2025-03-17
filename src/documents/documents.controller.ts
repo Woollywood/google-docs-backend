@@ -49,7 +49,7 @@ export class DocumentsController {
 
 	@ApiResponse({ status: 200, type: DocumentDto })
 	@Get(':id')
-	async getDocument(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string) {
+	getDocument(@User() { sub }: JwtDto, @Param('id', ParseUUIDPipe) id: string) {
 		return this.documentsService.getDocumentById(sub, id);
 	}
 
