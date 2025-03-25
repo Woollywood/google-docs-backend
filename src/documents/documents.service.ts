@@ -8,21 +8,28 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { DocumentDto } from './dto/document.dto';
 import { plainToInstance } from 'class-transformer';
 import { Actions, DocumentAbilityFactory } from './document-ability.factory';
+import { LiveblocksService } from 'src/liveblocks/liveblocks.service';
+import { RoomAccesses } from '@liveblocks/node';
 
 @Injectable()
 export class DocumentsService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly documentAbilityFactory: DocumentAbilityFactory,
+		private readonly liveblocksService: LiveblocksService,
 	) {}
 
 	async getAllByUserId(userId: string, pageOptionsDto: PageOptionsDto, title: string) {
 		const { skip, order, take } = pageOptionsDto;
+
 		const [entities, itemCount] = await Promise.all([
 			this.prisma.document.findMany({
 				where: {
 					title: { contains: title, mode: 'insensitive' },
-					OR: [{ user: { id: userId } }, { organization: { members: { some: { id: userId } } } }],
+					OR: [
+						{ user: { id: userId }, organization: null },
+						{ organization: { members: { some: { id: userId } } } },
+					],
 				},
 				skip,
 				orderBy: { createdAt: order },
@@ -63,11 +70,19 @@ export class DocumentsService {
 			throw new BadRequestException();
 		}
 
-		if (user.activeOrganization) {
-			return this.prisma.document.create({ data: { ...dto, userId, organizationId: user.activeOrganizationId } });
-		} else {
-			return this.prisma.document.create({ data: { ...dto, userId } });
-		}
+		const createdDocument = await this.prisma.document.create({
+			data: { ...dto, userId, organizationId: user.activeOrganizationId },
+		});
+		const { id, activeOrganizationId } = user;
+		const groupsAccesses: RoomAccesses = activeOrganizationId ? { [activeOrganizationId]: ['room:write'] } : {};
+		await this.liveblocksService.createRoomForDocument(createdDocument.id, createdDocument.id, {
+			defaultAccesses: [],
+			usersAccesses: {
+				[id]: ['room:write'],
+			},
+			groupsAccesses,
+		});
+		return createdDocument;
 	}
 
 	async delete(userId: string, id: string) {
@@ -81,6 +96,8 @@ export class DocumentsService {
 
 		const ability = await this.documentAbilityFactory.createForUser(userId);
 		if (ability.can(Actions.Delete, plainToInstance(DocumentDto, document))) {
+			const { id: roomId } = await this.liveblocksService.getRoomByDocumentId(userId, id);
+			await this.liveblocksService.deleteRoom(roomId);
 			return this.prisma.document.delete({ where: { id } });
 		} else {
 			throw new ForbiddenException();

@@ -42,7 +42,7 @@ export class DocumentsController {
 	}
 
 	@ApiResponse({ status: 201, type: DocumentDto })
-	@Post()
+	@Post('create')
 	createDocument(@User() { sub }: JwtDto, @Body() dto: CreateDocumentDto) {
 		return this.documentsService.createDocument(sub, dto);
 	}

@@ -4,9 +4,10 @@ import { DocumentsController } from './documents.controller';
 import { UsersModule } from 'src/users/users.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { DocumentAbilityFactory } from './document-ability.factory';
+import { LiveblocksModule } from 'src/liveblocks/liveblocks.module';
 
 @Module({
-	imports: [UsersModule, PrismaModule],
+	imports: [UsersModule, PrismaModule, LiveblocksModule],
 	controllers: [DocumentsController],
 	providers: [DocumentsService, DocumentAbilityFactory],
 	exports: [DocumentsService],

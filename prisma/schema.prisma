@@ -8,6 +8,28 @@ generator client {
     provider = "prisma-client-js"
 }
 
+generator nestjsDto {
+    provider                        = "prisma-generator-nestjs-dto"
+    output                          = "../src/generated/dto"
+    outputToNestJsResourceStructure = "true"
+    flatResourceStructure           = "false"
+    exportRelationModifierClasses   = "true"
+    reExport                        = "false"
+    createDtoPrefix                 = "Create"
+    updateDtoPrefix                 = "Update"
+    dtoSuffix                       = "Dto"
+    entityPrefix                    = ""
+    entitySuffix                    = ""
+    classValidation                 = "true"
+    classTransformer                = "true"
+    fileNamingStyle                 = "camel"
+    noDependencies                  = "false"
+    outputType                      = "class"
+    definiteAssignmentAssertion     = "false"
+    requiredResponseApiProperty     = "true"
+    prettier                        = "true"
+}
+
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
@@ -81,6 +103,7 @@ model Document {
     userId         String?
     organization   Organization? @relation(fields: [organizationId], references: [id])
     organizationId String?
+    Room           Room?
 }
 
 model Organization {
@@ -116,4 +139,13 @@ model Notification {
     organizationId String?
 
     @@unique([recipientId, organizationId])
+}
+
+model Room {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    document   Document @relation(fields: [documentId], references: [id])
+    documentId String   @unique
 }

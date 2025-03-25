@@ -164,6 +164,10 @@ export class OrganizationsService {
 				throw new BadRequestException();
 			}
 
+			await this.prisma.user.update({
+				where: { id: userId },
+				data: { activeOrganization: { disconnect: { id: organizationId } } },
+			});
 			return this.prisma.organization.update({
 				where: { id: organizationId },
 				data: { members: { disconnect: { id: userId } } },

@@ -11,6 +11,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { PrismaService } from './prisma/prisma.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { LiveblocksModule } from './liveblocks/liveblocks.module';
 
 @Module({
 	imports: [
@@ -25,6 +26,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 		OrganizationsModule,
 		PrismaModule,
 		NotificationsModule,
+		LiveblocksModule,
 	],
 	providers: [PrismaService],
 })
