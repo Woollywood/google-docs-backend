@@ -15,7 +15,7 @@ export class UsersController {
 
 	@ApiResponse({ status: 200, type: PaginatedUserModel })
 	@Get()
-	getUsers(
+	findUsers(
 		@User() { sub }: JwtDto,
 		@Query() pageOptionsDto: PageOptionsDto,
 		@Query('search', new DefaultValuePipe('')) search: string,

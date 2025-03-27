@@ -1,10 +1,20 @@
-import { Controller, Get, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	DefaultValuePipe,
+	Get,
+	Param,
+	ParseArrayPipe,
+	ParseUUIDPipe,
+	Post,
+	Query,
+	UseGuards,
+} from '@nestjs/common';
 import { LiveblocksService } from './liveblocks.service';
 import { User } from 'src/auth/auth.decorator';
 import { JwtDto } from 'src/auth/dto/auth.dto';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AccessTokenGuard } from 'src/auth/accessToken.guard';
-import { IdentifyUserDto, RoomDto } from './dto/rooms.dto';
+import { IdentifyUserDto, ResolvedUsersDto, RoomDto } from './dto/rooms.dto';
 
 @ApiBearerAuth()
 @UseGuards(AccessTokenGuard)
@@ -19,9 +29,24 @@ export class LiveblocksController {
 	}
 
 	@ApiResponse({ status: 200, type: RoomDto })
-	@Get('rooms/:documentId')
+	@Get('rooms/by-document-id/:documentId')
 	getRoomByDocumentId(@User() { sub }: JwtDto, @Param('documentId', ParseUUIDPipe) documentId: string) {
 		return this.liveblocksService.getRoomByDocumentId(sub, documentId);
+	}
+
+	@ApiResponse({ status: 200, type: [ResolvedUsersDto] })
+	@Get('rooms/resolve-users')
+	resolveUsers(@Query('ids', new ParseArrayPipe({ items: String, separator: ',' })) ids: string[]) {
+		return this.liveblocksService.resolveUsers(ids);
+	}
+
+	@ApiResponse({ status: 200, type: [String] })
+	@Get('rooms/mention-suggestions/:roomId')
+	getMentionSuggestions(
+		@Param('roomId', ParseUUIDPipe) roomId: string,
+		@Query('text', new DefaultValuePipe('')) text: string,
+	) {
+		return this.liveblocksService.getMentionSuggestions(roomId, text);
 	}
 
 	@ApiResponse({ status: 200, type: RoomDto })

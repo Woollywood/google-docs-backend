@@ -1,4 +1,4 @@
-import { Liveblocks } from '@liveblocks/node';
+import { IUserInfo, Liveblocks } from '@liveblocks/node';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RoomParams } from './liveblocks.types';
@@ -55,6 +55,18 @@ export class LiveblocksService {
 	async deleteRoom(roomId: string) {
 		await this.prisma.room.delete({ where: { id: roomId } });
 		return this.liveblocks.deleteRoom(roomId);
+	}
+
+	async resolveUsers(userIds: string[]): Promise<IUserInfo[]> {
+		const allUsers = await this.prisma.user.findMany({ where: { id: { in: userIds } } });
+		const mappedData: IUserInfo[] = allUsers.map(({ username }) => ({ name: username }));
+		return mappedData;
+	}
+
+	async getMentionSuggestions(roomId: string, text: string) {
+		const { data } = await this.liveblocks.getActiveUsers(roomId);
+		const mappedData = data.filter(({ info }) => info?.name?.includes(text)).map(({ id }) => id);
+		return mappedData;
 	}
 
 	async getRoomByDocumentId(userId: string, documentId: string) {

@@ -1,5 +1,6 @@
+import { IUserInfo } from '@liveblocks/node';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsString, IsUUID } from 'class-validator';
+import { IsDateString, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class IdentifyUserDto {
 	@ApiProperty()
@@ -27,4 +28,16 @@ export class RoomDto {
 	@ApiProperty({ type: 'string' })
 	@IsUUID()
 	documentId: string | null;
+}
+
+export class ResolvedUsersDto implements Pick<IUserInfo, 'name' | 'avatar'> {
+	@ApiProperty({ type: 'string', required: false })
+	@IsString()
+	@IsOptional()
+	name?: string;
+
+	@ApiProperty({ type: 'string', required: false })
+	@IsString()
+	@IsOptional()
+	avatar?: string;
 }
