@@ -1,9 +1,9 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { NotificationDto } from './notification.dto';
 import { IsEnum, IsUUID } from 'class-validator';
 import { NotificationTypeDto } from './notification-type.dto';
 
-export class CreateNotificationDto extends PartialType(NotificationDto) {
+export class CreateNotificationDto extends OmitType(PartialType(NotificationDto), ['organization', 'sender']) {
 	@ApiProperty({ type: NotificationDto })
 	@IsEnum(NotificationDto)
 	type: NotificationTypeDto;

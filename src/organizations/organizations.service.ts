@@ -119,9 +119,9 @@ export class OrganizationsService {
 				}),
 			]);
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			 
 			const mappedEntities = entities.map((entity) => ({
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+				 
 				...omit(entity, ['memberOf']),
 				isMember: entity.memberOf.some((organization) => organization.id === id),
 				isInvitationSended: notifications.some((notification) => notification.recipientId === entity.id),

@@ -19,6 +19,7 @@ export class NotificationsService {
 				skip,
 				orderBy: { createdAt: order },
 				take,
+				include: { organization: true, sender: true },
 			}),
 			this.prisma.notification.count({
 				where: {
